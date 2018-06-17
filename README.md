@@ -1,0 +1,3 @@
+# Zipfs
+
+Read-only zipfs.
