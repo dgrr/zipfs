@@ -2,11 +2,11 @@ package main
 
 import (
 	"archive/zip"
-	"context"
 	"io"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"golang.org/x/net/context"
 )
 
 // File fuse files

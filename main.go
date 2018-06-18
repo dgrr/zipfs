@@ -9,12 +9,14 @@ import (
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
 	"github.com/sevlyar/go-daemon"
+	"github.com/spf13/afero"
 )
 
 var (
 	uid        = uint32(os.Getuid())
 	gid        = uint32(os.Getgid())
 	zipfile    string
+	rootFs     = afero.NewMemMapFs()
 	cacheFiles = make(map[string]*zip.File)
 )
 
@@ -48,6 +50,12 @@ func main() {
 		os.Mkdir(os.Args[2], 0755)
 	}
 	for _, file := range file.File {
+		dir := path.Dir(file.Name)
+		rootFs.MkdirAll(path.Join("/", dir), 0777)
+		f, err := rootFs.Create(path.Join("/", file.Name))
+		if err == nil {
+			f.Close()
+		}
 		cacheFiles[file.Name] = file
 	}
 	c, err := fuse.Mount(
@@ -76,6 +84,6 @@ var _ fs.FS = (*FS)(nil)
 type FS struct{}
 
 func (root *FS) Root() (fs.Node, error) {
-	dir := &Dir{}
+	dir := &Dir{"/"}
 	return dir, nil
 }

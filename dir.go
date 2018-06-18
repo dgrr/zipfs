@@ -1,12 +1,13 @@
 package main
 
 import (
-	"context"
 	"os"
+	"path"
 	"sync"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -17,7 +18,9 @@ var (
 	}
 )
 
-type Dir struct{}
+type Dir struct {
+	Name string
+}
 
 func (d *Dir) Attr(_ context.Context, attr *fuse.Attr) error {
 	attr.Inode = 0
@@ -44,7 +47,17 @@ func (d *Dir) Rename(_ context.Context, req *fuse.RenameRequest, _ fs.Node) erro
 }
 
 func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
-	ff, ok := cacheFiles[name]
+	target := path.Join(d.Name, name)
+	info, err := rootFs.Stat(target)
+	if err != nil {
+		return nil, fuse.ENOENT
+	}
+	if info.IsDir() {
+		return &Dir{
+			Name: target,
+		}, nil
+	}
+	ff, ok := cacheFiles[target[1:]]
 	if ok {
 		return &File{
 			f: ff,
@@ -55,12 +68,22 @@ func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 
 func (d *Dir) ReadDirAll(_ context.Context) ([]fuse.Dirent, error) {
 	var res []fuse.Dirent
-	for _, f := range cacheFiles {
+	file, err := rootFs.Open(d.Name)
+	if err != nil {
+		panic(err)
+	}
+	files, err := file.Readdir(0)
+	if err != nil {
+		panic(err)
+	}
+	for _, f := range files {
 		var de fuse.Dirent
-		if f.Mode().IsDir() {
+		if f.IsDir() {
 			de.Type = fuse.DT_Dir
+		} else {
+			de.Type = fuse.DT_File
 		}
-		de.Name = f.Name
+		de.Name = f.Name()
 		res = append(res, de)
 	}
 	return res, nil
