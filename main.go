@@ -50,19 +50,21 @@ func main() {
 		os.Mkdir(os.Args[2], 0755)
 	}
 	for _, file := range file.File {
-		dir := path.Dir(file.Name)
-		rootFs.MkdirAll(path.Join("/", dir), 0777)
-		f, err := rootFs.Create(path.Join("/", file.Name))
+		name := path.Join("/", file.Name)
+		dir := path.Dir(name)
+		rootFs.MkdirAll(dir, 0777)
+		f, err := rootFs.Create(name)
 		if err == nil {
 			f.Close()
 		}
-		cacheFiles[file.Name] = file
+		cacheFiles[name] = file
 	}
 	c, err := fuse.Mount(
 		os.Args[2],
 		fuse.FSName("zipfs"),
 		fuse.Subtype("zipfs"),
 		fuse.LocalVolume(),
+		fuse.AllowOther(),
 		fuse.VolumeName("zip-volume"),
 	)
 	if err != nil {

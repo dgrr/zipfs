@@ -57,7 +57,7 @@ func (d *Dir) Lookup(_ context.Context, name string) (fs.Node, error) {
 			Name: target,
 		}, nil
 	}
-	ff, ok := cacheFiles[target[1:]]
+	ff, ok := cacheFiles[target]
 	if ok {
 		return &File{
 			f: ff,
