@@ -20,6 +20,10 @@ var (
 	cacheFiles = make(map[string]*zip.File)
 )
 
+func init() {
+	log.SetFlags(0)
+}
+
 func main() {
 	if len(os.Args) < 3 {
 		log.Printf("%s <zip file> <mount point>\n", os.Args[0])
